@@ -1,4 +1,4 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { AdminData } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -45,5 +45,33 @@ export class AdminController{
     Uploadfile(@UploadedFile()file:Express.Multer.File){
         console.log(file);
     }
+  @Post('/UploadValidation')
+   @UseInterceptors(FileInterceptor('file',{
+     
+    fileFilter:(req,file,cb)=>{
+      if(file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
+        cb(null,true);
+      else{
+        cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
+      }
+
+    },
+    limits:{fileSize:5000000},
+    storage: diskStorage({
+      destination: './Uploads',
+      filename:function(req,file,cb){
+        cb(null,Date.now()+file.originalname)
+      },
+    })
+
+   }))
+   uploadFileV(@UploadedFile() file: Express.Multer.File) {
+ console.log(file);
+
+}
+@Get('/getimage/:name')
+getImage(@Param('name')name,@Res() res){
+    res.sendFile(name,{root:'./Uploads'})
+}
 
 }
