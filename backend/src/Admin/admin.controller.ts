@@ -1,5 +1,8 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile } from "@nestjs/common";
 import { AdminService } from "./admin.service";
+import { AdminData } from "./admin.dto";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage, MulterError } from "multer";
 @Controller('adminP') //here admin is a path
 
 export class AdminController{
@@ -28,6 +31,19 @@ export class AdminController{
     @Get('/find')
     getAdminByNameAndId(@Query('name')name:string,@Query('id',ParseIntPipe)id:number):string{
         return this.adminService.getAdminByNameAndId(name,id);
+    }
+    @Post('/addAdmin')
+    addAdmin(@Body()adminData:object):object{
+        return this.adminService.addAdmin(adminData);
+    }
+      @Post('/addAdminDto')
+    addAdminDto(@Body()adminData:AdminData):object{
+        return this.adminService.addAdminDto(adminData);
+    }
+    @Post('/upload')
+    @UseInterceptors(FileInterceptor('file'))
+    Uploadfile(@UploadedFile()file:Express.Multer.File){
+        console.log(file);
     }
 
 }

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { isArgumentsObject } from "util/types";
+import { AdminData } from "./admin.dto";
 @Injectable()
 export class AdminService{
     
@@ -23,5 +24,14 @@ export class AdminService{
         console.log(typeof(id));
          console.log(typeof(name));
         return 'Admin Name:' + name + ', Admin id:' + id;
+    }
+    addAdmin(admindata:object){
+        console.log(admindata)
+        return admindata;
+    }
+    addAdminDto(adminData:AdminData){
+        console.log(adminData.name);
+        console.log(adminData.uname);
+            return adminData;
     }
 }
