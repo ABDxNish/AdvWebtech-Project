@@ -1,5 +1,8 @@
 export class AdminData{
-    name:string;
-    uname:string;
-    pass:string;
+    id: number;
+name: string;
+uname: string;
+pass: string;
+add: string;
+    fileName:string;
 }

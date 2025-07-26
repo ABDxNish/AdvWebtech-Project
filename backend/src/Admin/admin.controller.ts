@@ -1,4 +1,4 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { AdminData } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -72,6 +72,15 @@ export class AdminController{
 @Get('/getimage/:name')
 getImage(@Param('name')name,@Res() res){
     res.sendFile(name,{root:'./Uploads'})
+}
+//handling multiple operation in one route
+@Post('/addAdminM')
+ @UseInterceptors(FileInterceptor('file'))
+//@UsePipes(new ValidationPipe)
+UploadFile(@UploadedFile()file:Express.Multer.File,@Body()adminData:AdminData):object{
+  console.log(file);
+  adminData.fileName=file.originalname;
+  return this.adminService.addAdminDto(adminData);
 }
 
 }
