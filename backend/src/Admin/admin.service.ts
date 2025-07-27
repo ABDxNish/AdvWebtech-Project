@@ -29,23 +29,27 @@ export class AdminService{
          console.log(typeof(name));
         return 'Admin Name:' + name + ', Admin id:' + id;
     }
-    addAdmin(admindata:object){
-        console.log(admindata)
+    // addAdmin(admindata:object){
+    //     console.log(admindata)
+    //     return admindata;
+    // }
+    // addAdminDto(adminData:AdminData): object{
+    //      console.log(adminData.name);
+    //      console.log(adminData.uname);
+    //    console.log(adminData.fileName);
+    //    this.adminRepository.save({
+    //    id: adminData.id,
+    //      name: adminData.name,
+    //      uname: adminData.uname,
+    //      pass: adminData.pass,
+    //     add: adminData.add,
+    //      photo: adminData.fileName, // Assigning fileName to photo column
+    //  });
+    //          return adminData;
+    // }
+    getRegisteredData(admindata:AdminData):object{
+        console.log(admindata);
         return admindata;
-    }
-    addAdminDto(adminData:AdminData): object{
-        console.log(adminData.name);
-        console.log(adminData.uname);
-        console.log(adminData.fileName);
-        this.adminRepository.save({
-        id: adminData.id,
-        name: adminData.name,
-        uname: adminData.uname,
-        pass: adminData.pass,
-        add: adminData.add,
-        photo: adminData.fileName, // Assigning fileName to photo column
-    });
-            return adminData;
     }
    
 

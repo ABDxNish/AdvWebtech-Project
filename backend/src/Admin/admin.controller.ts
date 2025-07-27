@@ -32,24 +32,63 @@ export class AdminController{
     getAdminByNameAndId(@Query('name')name:string,@Query('id',ParseIntPipe)id:number):string{
         return this.adminService.getAdminByNameAndId(name,id);
     }
-    @Post('/addAdmin')
-    addAdmin(@Body()adminData:object):object{
-        return this.adminService.addAdmin(adminData);
-    }
-      @Post('/addAdminDto')
-    addAdminDto(@Body()adminData:AdminData):object{
-        return this.adminService.addAdminDto(adminData);
-    }
-    @Post('/upload')
-    @UseInterceptors(FileInterceptor('file'))
-    Uploadfile(@UploadedFile()file:Express.Multer.File){
-        console.log(file);
-    }
-  @Post('/UploadValidation')
+//     @Post('/addAdmin')
+//     addAdmin(@Body()adminData:object):object{
+//         return this.adminService.addAdmin(adminData);
+//     }
+//       @Post('/addAdminDto')
+//     addAdminDto(@Body()adminData:AdminData):object{
+//         return this.adminService.addAdminDto(adminData);
+//     }
+//     @Post('/upload')
+//     @UseInterceptors(FileInterceptor('file'))
+//     Uploadfile(@UploadedFile()file:Express.Multer.File){
+//         console.log(file);
+//     }
+//   @Post('/UploadValidation')
+//    @UseInterceptors(FileInterceptor('file',{
+     
+//     fileFilter:(req,file,cb)=>{
+//       if(file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
+//         cb(null,true);
+//       else{
+//         cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
+//       }
+
+//     },
+//     limits:{fileSize:5000000},
+//     storage: diskStorage({
+//       destination: './Uploads',
+//       filename:function(req,file,cb){
+//         cb(null,Date.now()+file.originalname)
+//       },
+//     })
+
+//    }))
+//    uploadFileV(@UploadedFile() file: Express.Multer.File) {
+//  console.log(file);
+
+// }
+// @Get('/getimage/:name')
+// getImage(@Param('name')name,@Res() res){
+//     res.sendFile(name,{root:'./Uploads'})
+// }
+// //handling multiple operation in one route
+// @Post('/addAdminM')
+//  @UseInterceptors(FileInterceptor('file'))
+// //@UsePipes(new ValidationPipe)
+// UploadFile(@UploadedFile()file:Express.Multer.File,@Body()adminData:AdminData):object{
+//   console.log(file);
+//   adminData.fileName=file.originalname;
+//   return this.adminService.addAdminDto(adminData);
+// }
+
+@Post('/register')
+@UsePipes(new ValidationPipe({ transform: true }))
    @UseInterceptors(FileInterceptor('file',{
      
     fileFilter:(req,file,cb)=>{
-      if(file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
+      if(file.originalname.match(/^.*\.(pdf)$/))
         cb(null,true);
       else{
         cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
@@ -58,29 +97,25 @@ export class AdminController{
     },
     limits:{fileSize:5000000},
     storage: diskStorage({
-      destination: './Uploads',
+      destination: './Uploads', //./src/admin/uploads
       filename:function(req,file,cb){
         cb(null,Date.now()+file.originalname)
       },
     })
 
    }))
-   uploadFileV(@UploadedFile() file: Express.Multer.File) {
- console.log(file);
+   getRegisteredData(@UploadedFile() file: Express.Multer.File,@Body()admindata:AdminData):object {
+admindata.filename=file.filename;
+  //admindata['filename'] = file.filename;
+  console.log(file);
+ console.log(admindata);
+ return this.adminService.getRegisteredData(admindata);
 
 }
-@Get('/getimage/:name')
-getImage(@Param('name')name,@Res() res){
-    res.sendFile(name,{root:'./Uploads'})
-}
-//handling multiple operation in one route
-@Post('/addAdminM')
- @UseInterceptors(FileInterceptor('file'))
-//@UsePipes(new ValidationPipe)
-UploadFile(@UploadedFile()file:Express.Multer.File,@Body()adminData:AdminData):object{
-  console.log(file);
-  adminData.fileName=file.originalname;
-  return this.adminService.addAdminDto(adminData);
-}
+
+
+   
+
+
 
 }
