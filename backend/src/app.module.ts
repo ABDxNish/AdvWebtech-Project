@@ -4,6 +4,11 @@ import { AppService } from './app.service';
 import { AdminController } from './Admin/admin.controller';
 import { AdminModule } from './Admin/admin.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomerController } from './customer/customer.controller';
+import { CustomerService } from './customer/customer.service';
+import { CustomerModule } from './customer/customer.module';
+import { CustomerController } from './customer/customer.controller';
+import { CustomerService } from './customer/customer.service';
 
 @Module({
   imports: [AdminModule,TypeOrmModule.forRoot(
@@ -15,9 +20,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
  database: 'AdminProject',// database name
  autoLoadEntities: true,
  synchronize: true,
- } ),
+ } ), CustomerModule,
 ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, CustomerController],
+  providers: [AppService, CustomerService],
 })
 export class AppModule {}
