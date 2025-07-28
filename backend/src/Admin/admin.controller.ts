@@ -75,16 +75,16 @@ export class AdminController{
 // }
 // //handling multiple operation in one route
 // @Post('/addAdminM')
-//  @UseInterceptors(FileInterceptor('file'))
-// //@UsePipes(new ValidationPipe)
-// UploadFile(@UploadedFile()file:Express.Multer.File,@Body()adminData:AdminData):object{
+// @UsePipes(new ValidationPipe)
+//  @UseInterceptors(FileInterceptor('myfile'))
+// UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):object{
 //   console.log(file);
-//   adminData.fileName=file.originalname;
+//   adminData.photo=file.originalname;
 //   return this.adminService.addAdminDto(adminData);
 // }
 
 @Post('/register')
-@UsePipes(new ValidationPipe({ transform: true }))
+@UsePipes(new ValidationPipe())
    @UseInterceptors(FileInterceptor('file',{
      
     fileFilter:(req,file,cb)=>{
@@ -106,7 +106,7 @@ export class AdminController{
    }))
    getRegisteredData(@UploadedFile() file: Express.Multer.File,@Body()admindata:AdminData):object {
 admindata.filename=file.filename;
-  //admindata['filename'] = file.filename;
+  
   console.log(file);
  console.log(admindata);
  return this.adminService.getRegisteredData(admindata);
