@@ -1,10 +1,11 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { AdminData } from "./admin.dto";
+import { AgencyEntity } from "src/Agents/Agency.entity";
 
 @Entity('Admins') //table will be created in this name
 export class AdminEntity{
     
-         @PrimaryColumn({name:'ID'})
+         @PrimaryGeneratedColumn({name:'ID'})
          id:number;
          @Column({name:'Name'})
          name:string;
@@ -16,5 +17,7 @@ export class AdminEntity{
          add:string;
           @Column({name:'Dp'})
          photo:string;
+         
+        @OneToMany(()=>AgencyEntity,agency=>agency.admin,{cascade:true}) agencys:AgencyEntity[];
 
 }
