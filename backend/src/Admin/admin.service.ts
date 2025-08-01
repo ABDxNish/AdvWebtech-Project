@@ -55,6 +55,8 @@ export class AdminService{
     //     console.log(admindata);
     //     return admindata;
     // }
+
+    //relationship and crud
     async getAllAdmin(): Promise<AdminEntity[]>{
        //return this.adminRepository.find();
        return this.adminRepository.find({
@@ -67,7 +69,7 @@ export class AdminService{
    async getAdminByName(name:string): Promise<AdminEntity    | null> {
     return this.adminRepository.findOneBy({name:name})
    }
-  async updateAdmin(id:number, name:Partial<AdminEntity>): Promise<AdminEntity | null>{
+  async updateAdmin(id:number, name:AdminEntity): Promise<AdminEntity | null>{
   await this.adminRepository.update(id,name);
    return this.adminRepository.findOneBy({id:id});
    console.log('Update complete');
@@ -84,5 +86,35 @@ export class AdminService{
     }
     return this.agencyRepository.save(AgencyData);
    }
+   getAllAdminWitAgency():Promise<AdminEntity[]>{
+    return this.adminRepository.find({relations:['agencys']});
+   }
+   getAgencyByAdminId(adminid:number):Promise<AgencyEntity[]>{
+    return this.agencyRepository.find({where:{admin:{id:adminid}}})
+   }
+
+//lab3
+//  async createAgency(agencyData:AgencyEntity): Promise<AgencyEntity>{
+    
+//     return this.agencyRepository.save(agencyData);
+//     console.log("AgencyAdded");
+//  }
+//  async updateCountry(id:number,country:AgencyEntity): Promise<AgencyEntity | null >{
+
+//   await this.agencyRepository.update(id,country);
+//    return this.agencyRepository.findOneBy({id:id});
+
+//    console.log('Update complete');
+//    }
+// getAgencyByDate(joiningDate: string): Promise<AgencyEntity[]> {
+//   return this.agencyRepository.find({
+//     where: {
+//       date: joiningDate,
+//     },
+//   });
+// }
+// async getAgencyUnknownCountry():Promise<AgencyEntity[]>{
+//     return this.agencyRepository.find({where:{country:'Unknown'}});
+// }
 
 }

@@ -116,7 +116,7 @@ UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData
 
 // }
 
-
+//crud and relationship
    @Post('/getAdmin')
    getAllAdmin():object{
     return this.adminService.getAllAdmin();
@@ -139,4 +139,32 @@ UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData
    
     return this.adminService.createAgency(adminid,AgencyData);
    }
+   @Get('/allAdminWithAgencys')
+   getAllAdminAgency(): Promise<AdminEntity[]>{
+    return this.adminService.getAllAdminWitAgency();
+   }
+   @Post('/getAgencyByAdminId/:adminid')
+   getAgencyByAdminId(@Param('adminid',ParseIntPipe) id:number):Promise<AgencyEntity[]>{
+  return this.adminService.getAgencyByAdminId(id);
+   }
+
+  //lab3
+  // @Post('/createAgency')
+  // createAgency(@Body() agencyData:AgencyEntity):object{
+  //   return this.adminService.createAgency(agencyData);
+  // }
+  // @Post('/updateCountry/:id')
+  // updateCountr(@Param('id',ParseIntPipe)id:number, @Body()country:AgencyEntity){
+  //   return this.adminService.updateCountry(id,country);
+  // }
+  // @Post('/getAgencyByDate/:date')
+  // getAgencyByDate(@Param('date') date:string){
+  //   return this.adminService.getAgencyByDate(date)
+  // }
+  // @Post('/unknownCountry')
+  // getUnknownCountry(){
+  //   return this.adminService.getAgencyUnknownCountry();
+  // }
+  
+
 }
