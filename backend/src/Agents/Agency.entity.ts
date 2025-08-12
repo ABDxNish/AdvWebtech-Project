@@ -10,7 +10,9 @@ export class AgencyEntity{
     name:string;
     @Column({name:'Email'})
     email:string;
-    @ManyToOne(()=>AdminEntity,admin=>admin.agencys) admin:AdminEntity;
+    //@ManyToOne(()=>AdminEntity,admin=>admin.agencys) admin:AdminEntity;
+     @ManyToOne(() => AdminEntity, admin => admin.agencys, { onDelete: 'CASCADE' })
+    admin: AdminEntity;
     //length: 150
     // @Column({name:'Uuid',type: 'uuid'})
     // @Generated('uuid')

@@ -6,6 +6,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { promises } from "dns";
 import { AgencyEntity } from "src/Agents/Agency.entity";
+import { error } from "console";
+import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AdminService{
     constructor(@InjectRepository(AdminEntity)private adminRepository:Repository<AdminEntity>,@InjectRepository(AgencyEntity) private agencyRepository:Repository<AgencyEntity>){}
@@ -40,6 +42,7 @@ export class AdminService{
          console.log(adminData.name);
          console.log(adminData.uname);
        console.log(adminData.photo);
+      
     //    this.adminRepository.save({
     //    id: adminData.id,
     //      name: adminData.name,
@@ -51,10 +54,10 @@ export class AdminService{
     this.adminRepository.save(adminData);
              return adminData;
     }
-    // getRegisteredData(admindata:AdminData):object{
-    //     console.log(admindata);
-    //     return admindata;
-    // }
+    getRegisteredData(admindata:AdminData):object{
+        console.log(admindata);
+        return admindata;
+    }
 
     //relationship and crud
     async getAllAdmin(): Promise<AdminEntity[]>{
@@ -68,6 +71,27 @@ export class AdminService{
     }
    async getAdminByName(name:string): Promise<AdminEntity    | null> {
     return this.adminRepository.findOneBy({name:name})
+   }
+      async getAdminByIDSes(id:number): Promise<AdminEntity    | null> {
+    return this.adminRepository.findOneBy({id})
+   }
+   async loginSession(id,pass): Promise<AdminEntity    | null> {
+    const check= await this.adminRepository.findOneBy({id:id});
+    if(!check){
+        throw new Error('Admin Not Found! Please Check With Valid Id');
+    }
+    else{
+        const isMatch= await bcrypt.compare(pass,check.pass);
+        if(!isMatch){
+            throw new Error('Password not matched, please use valid password!');
+            console.log('Wrong Password');
+
+        }
+        else{
+
+            return check;
+        }
+    }
    }
   async updateAdmin(id:number, name:AdminEntity): Promise<AdminEntity | null>{
   await this.adminRepository.update(id,name);
@@ -100,12 +124,18 @@ export class AdminService{
 //     console.log("AgencyAdded");
 //  }
 //  async updateCountry(id:number,country:AgencyEntity): Promise<AgencyEntity | null >{
-
-//   await this.agencyRepository.update(id,country);
+//   const check= await this.agencyRepository.findOneBy({id:id});
+//   if(!check ){
+//     throw new Error("Agency Id Not Found!")
+//   }
+//   else{
+//    await this.agencyRepository.update(id,country);
+//    console.log('Update complete');
 //    return this.agencyRepository.findOneBy({id:id});
 
-//    console.log('Update complete');
-//    }
+//   }
+   
+//   }
 // getAgencyByDate(joiningDate: string): Promise<AgencyEntity[]> {
 //   return this.agencyRepository.find({
 //     where: {

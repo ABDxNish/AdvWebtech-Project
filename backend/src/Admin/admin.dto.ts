@@ -26,6 +26,10 @@ add: string;
   // @IsIn(['male', 'female'], { message: 'Gender must be male or female' })
   // gender: string;
 }
+export interface LoginDto {
+  id: number;
+  pass: string;
+}
 
 
 

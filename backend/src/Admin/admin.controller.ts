@@ -1,10 +1,17 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards } from "@nestjs/common";
 import { AdminService } from "./admin.service";
-import { AdminData } from "./admin.dto";
+import { AdminData, LoginDto } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage, MulterError } from "multer";
 import { AdminEntity } from "./admin.entity";
 import { AgencyEntity } from "src/Agents/Agency.entity";
+import * as bcrypt from 'bcrypt';
+//import { Session } from "inspector/promises";
+import { Session } from '@nestjs/common';
+
+
+import session from "express-session";
+import { SessionGuard } from "./admin.session.guard";
 @Controller('adminP') //here admin is a path
 
 export class AdminController{
@@ -75,14 +82,30 @@ export class AdminController{
 getImage(@Param('name')name,@Res() res){
     res.sendFile(name,{root:'./Uploads'})
 }
-//handling multiple operation in one route
+//handling multiple operation in one route+hashing+session
 @Post('/addAdminM')
 @UsePipes(new ValidationPipe)
  @UseInterceptors(FileInterceptor('myfile'))
-UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):object{
+async UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):Promise<object>{
   console.log(file);
   adminData.photo=file.originalname;
+  const salt= await bcrypt.genSalt();
+  adminData.pass= await bcrypt.hash(adminData.pass,salt);
+
   return this.adminService.addAdminDto(adminData);
+}
+@Post('/loginAdmin')
+async loginSession(@Body()body: LoginDto, @Session() session){
+  const { id, pass } = body;
+ const admin= await this.adminService.loginSession(id,pass);
+ if(!admin){
+  return { message: 'User not found' };
+ }
+ else{
+  session.ID= admin.id;
+  //session.pass=check.pass;
+ console.log('Session Created');
+ }
 }
 
 //Lab2
@@ -125,17 +148,18 @@ UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData
    getAdminByName(@Param('name') name:string):object{
     return this.adminService.getAdminByName(name);
    }
-   @Post('/updateAdmin/:id')
+   @Put('/updateAdmin/:id')
    updateAdmin(@Param('id', ParseIntPipe) id:number, @Body()name:AdminEntity):object{
    return this.adminService.updateAdmin(id,name);
    }
-   @Post('/deleteAdmin/:id')
+   @Delete('/deleteAdmin/:id')
    deleteAdmin(@Param('id',ParseIntPipe)id:number):object{
     return this.adminService.deleteAdmin(id);
    }
 
    @Post('/addAgencies/:adminid')
-   addAgency(@Param('adminid',ParseIntPipe) adminid:number,@Body()AgencyData:AgencyEntity):object{
+    @UseGuards(SessionGuard)
+   addAgency(@Param('adminid',ParseIntPipe) adminid:number,@Body()AgencyData:AgencyEntity, @Session() session):object{
    
     return this.adminService.createAgency(adminid,AgencyData);
    }
@@ -147,6 +171,7 @@ UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData
    getAgencyByAdminId(@Param('adminid',ParseIntPipe) id:number):Promise<AgencyEntity[]>{
   return this.adminService.getAgencyByAdminId(id);
    }
+
 
   //lab3
   // @Post('/createAgency')
