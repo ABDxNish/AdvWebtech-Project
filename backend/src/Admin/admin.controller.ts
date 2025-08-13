@@ -1,4 +1,4 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { AdminData, LoginDto } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -144,10 +144,24 @@ async loginSession(@Body()body: LoginDto, @Session() session){
    getAllAdmin():object{
     return this.adminService.getAllAdmin();
    }
-   @Post('getAdminByName/:name')
-   getAdminByName(@Param('name') name:string):object{
-    return this.adminService.getAdminByName(name);
-   }
+@Post('getAdminByName/:name')
+async getAdminByName(@Param('name') name: string): Promise<AdminEntity> {
+  const admin = await this.adminService.getAdminByName(name);
+
+if (!admin) {
+    throw new HttpException(
+      {
+        statusCode: 1001, 
+        message: 'Maybe name is incorrect (This is a custom message)',
+      },
+      HttpStatus.FORBIDDEN, 
+    );
+  }
+
+  return admin;
+}
+
+
    @Put('/updateAdmin/:id')
    updateAdmin(@Param('id', ParseIntPipe) id:number, @Body()name:AdminEntity):object{
    return this.adminService.updateAdmin(id,name);

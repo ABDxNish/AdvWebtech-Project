@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { isArgumentsObject } from "util/types";
 import { AdminData } from "./admin.dto";
 import { AdminEntity } from "./admin.entity";
@@ -8,9 +8,10 @@ import { promises } from "dns";
 import { AgencyEntity } from "src/Agents/Agency.entity";
 import { error } from "console";
 import * as bcrypt from 'bcrypt';
+import { MailerService } from "@nestjs-modules/mailer";
 @Injectable()
 export class AdminService{
-    constructor(@InjectRepository(AdminEntity)private adminRepository:Repository<AdminEntity>,@InjectRepository(AgencyEntity) private agencyRepository:Repository<AgencyEntity>){}
+    constructor(@InjectRepository(AdminEntity)private adminRepository:Repository<AdminEntity>,@InjectRepository(AgencyEntity) private agencyRepository:Repository<AgencyEntity>,private mailerService: MailerService){}
   
     
         getAdmin():string{
@@ -34,25 +35,25 @@ export class AdminService{
          console.log(typeof(name));
         return 'Admin Name:' + name + ', Admin id:' + id;
     }
+    //project
     addAdmin(admindata:object){
         console.log(admindata)
         return admindata;
     }
-    addAdminDto(adminData:AdminData): object{
-         console.log(adminData.name);
-         console.log(adminData.uname);
-       console.log(adminData.photo);
+    async addAdminDto(adminData:AdminData): Promise<object>{
+    //      console.log(adminData.name);
+    //      console.log(adminData.uname);
+    //    console.log(adminData.photo);
       
-    //    this.adminRepository.save({
-    //    id: adminData.id,
-    //      name: adminData.name,
-    //      uname: adminData.uname,
-    //      pass: adminData.pass,
-    //     add: adminData.add,
-    //      photo: adminData.fileName, // Assigning fileName to photo column
-    //  });
-    this.adminRepository.save(adminData);
-             return adminData;
+
+   const admin= await this.adminRepository.save(adminData);
+ 
+    await this.mailerService.sendMail({
+      to: 'pm5612356@gmail.com',
+      subject: 'New Admin Added',
+      text: 'A new admin has been added. ID: '+ admin.id,
+    });
+             return admin;
     }
     getRegisteredData(admindata:AdminData):object{
         console.log(admindata);
@@ -78,12 +79,25 @@ export class AdminService{
    async loginSession(id,pass): Promise<AdminEntity    | null> {
     const check= await this.adminRepository.findOneBy({id:id});
     if(!check){
-        throw new Error('Admin Not Found! Please Check With Valid Id');
+       // throw new Error('Admin Not Found! Please Check With Valid Id');
+        throw new HttpException(
+      {
+        statusCode: 1001, 
+        message: 'Admin Not Found! Please Check With Valid Id (This is a custom message)',
+      },
+      HttpStatus.FORBIDDEN, 
+    );
     }
     else{
         const isMatch= await bcrypt.compare(pass,check.pass);
         if(!isMatch){
-            throw new Error('Password not matched, please use valid password!');
+           throw new HttpException(
+                 {
+                   statusCode: 2107, 
+                   message: 'Maybe password is incorrect (This is a custom message)',
+                 },
+                 HttpStatus.FORBIDDEN, 
+               );
             console.log('Wrong Password');
 
         }
