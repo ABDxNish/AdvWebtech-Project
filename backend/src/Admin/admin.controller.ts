@@ -105,6 +105,7 @@ async loginSession(@Body()body: LoginDto, @Session() session){
   session.ID= admin.id;
   //session.pass=check.pass;
  console.log('Session Created');
+  console.log(session);
  }
 }
 
@@ -174,8 +175,19 @@ if (!admin) {
    @Post('/addAgencies/:adminid')
     @UseGuards(SessionGuard)
    addAgency(@Param('adminid',ParseIntPipe) adminid:number,@Body()AgencyData:AgencyEntity, @Session() session):object{
-   
+  
+    if(Number(session.ID)===Number(adminid)){
     return this.adminService.createAgency(adminid,AgencyData);
+    }
+    else{
+      throw new HttpException(
+                 {
+                   statusCode: 9109, 
+                   message: 'You are not logged in with this id (This is a custom message)',
+                 },
+                 HttpStatus.FORBIDDEN, 
+               );
+    }
    }
    @Get('/allAdminWithAgencys')
    getAllAdminAgency(): Promise<AdminEntity[]>{
