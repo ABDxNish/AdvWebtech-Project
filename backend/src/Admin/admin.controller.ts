@@ -95,8 +95,8 @@ async UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:Adm
   return this.adminService.addAdminDto(adminData);
 }
 @Post('/loginAdmin')
-async loginSession(@Body()body: LoginDto, @Session() session){
-  const { id, pass } = body;
+async loginSession(@Body(){ id, pass }: AdminData, @Session() session){
+
  const admin= await this.adminService.loginSession(id,pass);
  if(!admin){
   return { message: 'User not found' };
