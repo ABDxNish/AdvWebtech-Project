@@ -1,6 +1,6 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus, Patch } from "@nestjs/common";
 import { AdminService } from "./admin.service";
-import { AdminData, LoginDto } from "./admin.dto";
+import { AdminData } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage, MulterError } from "multer";
 import { AdminEntity } from "./admin.entity";
@@ -12,6 +12,7 @@ import { Session } from '@nestjs/common';
 
 import session from "express-session";
 import { SessionGuard } from "./admin.session.guard";
+import { allowedNodeEnvironmentFlags } from "node:process";
 @Controller('adminP') //here admin is a path
 
 export class AdminController{
@@ -198,6 +199,31 @@ if (!admin) {
   return this.adminService.getAgencyByAdminId(id);
    }
 
+
+@Get('/agencycount')
+async getAgencyCount(): Promise<{ count: number }> {
+  return this.adminService.countAgencies();
+}
+
+
+@Patch('/agencyupdate/:id')
+  @UseGuards(SessionGuard)
+async updateAgency(@Param('id', ParseIntPipe) id: number,@Body() updateData: { name, email }, @Session() session): Promise<AgencyEntity> {
+  const adminExists = await this.adminService.getAdminByIDSes(Number(session.ID));
+  if(adminExists){
+    return this.adminService.updateAgency(id, updateData);
+    }
+    else{
+      throw new HttpException(
+                 {
+                   statusCode: 9109, 
+                   message: 'You are not logged in with this id (This is a custom message)',
+                 },
+                 HttpStatus.FORBIDDEN, 
+               );
+    }
+  
+}
 
   //lab3
   // @Post('/createAgency')

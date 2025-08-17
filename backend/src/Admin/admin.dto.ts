@@ -1,11 +1,16 @@
 import { IsDate, IsDateString, IsEmail, IsIn, Matches } from "class-validator";
 export class AdminData{
     id: number;
+    @Matches(/^[A-Za-z]+$/,{ message: 'Name must not contain special characters' })
 name: string;
 uname: string;
+@Matches(/^(?=.*\d).{6,}$/, { message: 'Password must be at least 6 characters long and contain at least one number' })
 pass: string;
+
 add: string;
-    photo:string;
+photo:string;
+}
+
 // @Matches(/^[A-Za-z0-9 ]+$/,{ message: 'Name must not contain special characters' })
 // name:string;
 //  @Matches(/^(?=.*[a-z]).{6,}$/, { message: 'Password must contain at least 6 characters and one lowercase letter' })
@@ -25,7 +30,7 @@ add: string;
   // //{} empty object reperest default email type
   // @IsIn(['male', 'female'], { message: 'Gender must be male or female' })
   // gender: string;
-}
+
 
 
 

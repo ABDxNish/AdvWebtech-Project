@@ -131,6 +131,33 @@ export class AdminService{
     return this.agencyRepository.find({where:{admin:{id:adminid}}})
    }
 
+async countAgencies(): Promise<{ count: number }> {
+  const count = await this.agencyRepository.count();
+  return { count };
+}
+
+
+async updateAgency(id: number,updateData: { name, email }): Promise<AgencyEntity> {
+  const agency = await this.agencyRepository.findOneBy({ id });
+  if (!agency) {
+    throw new HttpException(
+      { statusCode: 404, 
+        message: 'Agency not found' },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+
+
+
+ await this.agencyRepository.update(id, {
+  name: updateData.name,
+  email: updateData.email,
+});
+
+  return agency;
+}
+
+
 //lab3
 //  async createAgency(agencyData:AgencyEntity): Promise<AgencyEntity>{
     
