@@ -373,6 +373,24 @@ export class AgencyService {
  
     return res.json(blogs);
   }
+
+  async DeleteAgency(id, req, res) {
+    console.log("called");
+    const user = await this.verifyUser(req, res);
+    if (!user) {
+      return res.json({ message: 'Invalid or expired session!' });
+    }
+
+    const agencyDetails = await this.agency_info_Repository.findOne({
+      where: { id: id },
+    });
+
+    await this.agency_info_Repository.delete(id);
+
+    return res.json({ message: 'Delete successfully' });
+  }
+
+
 }
  
  

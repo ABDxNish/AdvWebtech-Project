@@ -24,6 +24,11 @@ export class AgencyController {
     login(@Body() data : LoginDto, @Res() res) {
         return this.AgencyService.login(data, res);
     }
+     @Delete("/DeleteAgency/:id")
+    Delete(@Param('id') id, @Req() req, @Res() res) {
+        return this.AgencyService.DeleteAgency(id, req, res);
+    }
+
 
     @UseGuards(AuthGuard)
     @Post("/editAgencyProfile")
