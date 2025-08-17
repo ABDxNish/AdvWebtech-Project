@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res, Get, Req, Param, Delete, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Res, Get, Req, Param, Delete, UseGuards, Put, Patch, ValidationPipe, UsePipes } from '@nestjs/common';
 import { AgencyService } from './agency.service';
 import { AuthGuard } from 'src/guard/jwt.guard';
 import { LoginDto } from './dtos/login.dto';
@@ -6,6 +6,7 @@ import { AgencyDto } from './dtos/Agency.dto';
 import { PackageDto } from './dtos/Package.dto';
 import { BlogDto } from './dtos/Blog.dto';
 import { EditAgencyProfileDto } from './dtos/EditAgencyProfile.dto';
+@UsePipes(ValidationPipe)
 
 @Controller('agency')
 export class AgencyController {
@@ -31,7 +32,7 @@ export class AgencyController {
 
 
     @UseGuards(AuthGuard)
-    @Post("/editAgencyProfile")
+    @Put("/editAgencyProfile")
     editAgencyProfile(@Body() data : EditAgencyProfileDto, @Req() req, @Res() res) {
         return this.AgencyService.editAgencyProfile(data, req, res);
     }
@@ -49,7 +50,7 @@ export class AgencyController {
     }
 
     @UseGuards(AuthGuard)
-    @Post("/EditPackage/:id")
+    @Patch("/EditPackage/:id")
     EditPackage(@Body() data : PackageDto, @Param('id') id, @Req() req, @Res() res) {
         return this.AgencyService.EditPackage(data, id, req, res);
     }

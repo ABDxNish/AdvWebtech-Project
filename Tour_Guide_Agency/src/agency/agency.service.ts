@@ -116,7 +116,7 @@ export class AgencyService {
       email: data.email,
       password: hashedPass,
       user_type: 'Agency',
-      user_id: agency.id,
+      user: agency,
     };
  
     await this.login_info_Repository.save(loginData);
