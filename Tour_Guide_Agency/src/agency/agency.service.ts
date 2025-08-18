@@ -120,8 +120,8 @@ export class AgencyService {
     };
  
     await this.login_info_Repository.save(loginData);
- 
-    const email = await this.EmailService.sendEmail(agencyData.email, "Account Creation", "You have successfully created an account using this email");
+
+    // const email = await this.EmailService.sendEmail(agencyData.email, "Account Creation", "You have successfully created an account using this email");
  
     return { message: 'Agency register successfully.' };
   }
@@ -314,16 +314,16 @@ export class AgencyService {
     if (!user) {
       return res.json({ message: 'Invalid or expired session!' });
     }
- 
+     
     const packeageData = {
       title: data.title,
       content: data.content,
-      author_id: user.user_id,
+      author_id: user.id,
       comment_count: 0,
       created_at: new Date(),
       react_count: 0,
     };
- 
+    
     await this.blog_info_Repository.save(packeageData);
  
     return res.json({ messge: 'Blog Uploaded...' });

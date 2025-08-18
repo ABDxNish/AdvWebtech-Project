@@ -6,7 +6,6 @@ import { AgencyDto } from './dtos/Agency.dto';
 import { PackageDto } from './dtos/Package.dto';
 import { BlogDto } from './dtos/Blog.dto';
 import { EditAgencyProfileDto } from './dtos/EditAgencyProfile.dto';
-@UsePipes(ValidationPipe)
 
 @Controller('agency')
 export class AgencyController {
@@ -16,6 +15,8 @@ export class AgencyController {
     passwordHasing(@Body() data) {
         return this.AgencyService.passwordHasing(data);
     }
+    @UsePipes(ValidationPipe)
+
     @Post("/signUp")
     signUp(@Body() data : AgencyDto) {
         return this.AgencyService.signUp(data);
@@ -40,8 +41,8 @@ export class AgencyController {
     @UseGuards(AuthGuard)
     @Post("/logout")
     logout(@Req() req, @Res() res) {
-        return this.AgencyService.logout(req, res);
-    }
+        return this.AgencyService.logout(req, res);    }
+@UsePipes(ValidationPipe)
 
     @UseGuards(AuthGuard)
     @Post("/CreatePackage")
