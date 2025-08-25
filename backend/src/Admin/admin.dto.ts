@@ -11,6 +11,19 @@ add: string;
 photo:string;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // @Matches(/^[A-Za-z0-9 ]+$/,{ message: 'Name must not contain special characters' })
 // name:string;
 //  @Matches(/^(?=.*[a-z]).{6,}$/, { message: 'Password must contain at least 6 characters and one lowercase letter' })
