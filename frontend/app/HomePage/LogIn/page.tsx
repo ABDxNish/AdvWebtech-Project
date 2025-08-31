@@ -1,29 +1,33 @@
 import Link from "next/link";
 
-export default function Login(){
-    return (
-        <>
-        {/* <h1>Company</h1>
-        <h5>This is Company</h5>
-         <Link href="./">About</Link> */}
-          <form>
-        <label>
-          Username:
-          <input type="text" name="username" />
-        </label>
-        <br />
-        <label>
-          Password:
-          <input type="password" name="password" />
-        </label>
-        <br />
-        <button type="submit">Login</button>
-      </form>
+export default function Login() {
+  return (
+    <>
+      <table>
+        <tr>
+          <td>Username:</td>
+          <td><input type="text" name="username" /></td>
+        </tr>
 
-      
+        <tr>
+          <td>Password:</td>
+          <td><input type="password" name="password" /></td>
+        </tr>
+
+        <tr>
+          <td></td>
+          <td>
+            <Link href="/HomePage/AdminDashboard">
+            <button type="submit">Login</button>
+            </Link>
+          </td>
+        </tr>
+      </table>
+
+      <br />
       <Link href="/HomePage">
         <button>Home</button>
       </Link>
-        </>
-    );
+    </>
+  );
 }
