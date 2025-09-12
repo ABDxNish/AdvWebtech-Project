@@ -22,10 +22,10 @@ export class AdminController{
     getAdmin():string{
         return this.adminService.getAdmin();
     }
-    @Get('/getId/:id')
-    getAdminById(@Param('id')id:string):string{
-            return this.adminService.getAdminById(id);
-    }
+    // @Get('/getId/:id')
+    // getAdminById0(@Param('id')id:string):string{
+    //         return this.adminService.getAdminById(id);
+    // }
     @Post('/pic')
     getPhoto():string{
         return this.adminService.getPhoto();
@@ -34,10 +34,10 @@ export class AdminController{
     getPhotoById1(@Param('id',ParseIntPipe)id:number):string{
        return this.adminService.getPhotoById1(id);
     }
-      @Post('/photoId/:id')
-    getPhotoById2(@Param('id')id:number):string{
-       return this.adminService.getPhotoById2(id);
-    }
+    //   @Post('/photoId/:id')
+    // getPhotoById2(@Param('id')id:number):string{
+    //    return this.adminService.getPhotoById2(id);
+    // }
     @Get('/find')
     getAdminByNameAndId(@Query('name')name:string,@Query('id',ParseIntPipe)id:number):string{
         return this.adminService.getAdminByNameAndId(name,id);
@@ -81,17 +81,55 @@ export class AdminController{
 }
 @Get('/getimage/:name')
 getImage(@Param('name')name,@Res() res){
+  
     res.sendFile(name,{root:'./Uploads'})
 }
 //handling multiple operation in one route+hashing+session
+// @Post('/addAdminM')
+// @UsePipes(new ValidationPipe)
+//  @UseInterceptors(FileInterceptor('myfile'))
+// async UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):Promise<object>{
+//   console.log(file);
+//   adminData.photo=file.originalname;
+//   const salt= await bcrypt.genSalt();
+//   adminData.pass= await bcrypt.hash(adminData.pass,salt);
+
+//   return this.adminService.addAdminDto(adminData);
+// }
 @Post('/addAdminM')
 @UsePipes(new ValidationPipe)
- @UseInterceptors(FileInterceptor('myfile'))
-async UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):Promise<object>{
+@UseInterceptors(FileInterceptor('myfile', {
+  storage: diskStorage({
+    destination: './Uploads', // where files are stored
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + '-' + file.originalname;
+      cb(null, uniqueName);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+      cb(null, true);
+    } else {
+      cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+}))
+async UploadFile(
+  @UploadedFile() file: Express.Multer.File,
+  @Body() adminData: AdminData
+): Promise<object> {
+  if (!file) {
+    throw new Error('No file uploaded');
+  }
+
   console.log(file);
-  adminData.photo=file.originalname;
-  const salt= await bcrypt.genSalt();
-  adminData.pass= await bcrypt.hash(adminData.pass,salt);
+
+  // Store the saved filename in DB
+  adminData.photo = file.filename;
+
+  const salt = await bcrypt.genSalt();
+  adminData.pass = await bcrypt.hash(adminData.pass, salt);
 
   return this.adminService.addAdminDto(adminData);
 }
@@ -109,6 +147,14 @@ async loginSession(@Body(){ id, pass }: AdminData, @Session() session){
   console.log(session);
  }
 }
+@Get('check-session')
+  checkSession(@Session() session) {
+    if (session.ID) {
+      return { loggedIn: true, id: session.ID };
+    }
+    return { loggedIn: false };
+  }
+
 
 //Lab2
 // @Post('/register')
@@ -162,12 +208,41 @@ if (!admin) {
 
   return admin;
 }
+@Get('getAdminById/:id')
+async getAdminById(@Param('id') id: number): Promise<AdminEntity> {
+  const admin = await this.adminService.getAdminById(id);
+
+if (!admin) {
+    throw new HttpException(
+      {
+        statusCode: 1001, 
+        message: 'Maybe name is incorrect (This is a custom message)',
+      },
+      HttpStatus.FORBIDDEN, 
+    );
+  }
+
+  return admin;
+}
+
 
 
    @Put('/updateAdmin/:id')
    updateAdmin(@Param('id', ParseIntPipe) id:number, @Body()name:AdminEntity):object{
    return this.adminService.updateAdmin(id,name);
    }
+   @Put('/reset-password')
+async resetPassword(@Session() session, @Body('newPass') newPass: string) {
+  if (!session.ID) {
+    throw new HttpException(
+      { statusCode: 401, message: 'Not logged in' },
+      HttpStatus.UNAUTHORIZED,
+    );
+  }
+
+  return this.adminService.resetPassword(session.ID, newPass);
+}
+
    @Delete('/deleteAdmin/:id')
    deleteAdmin(@Param('id',ParseIntPipe)id:number):object{
     return this.adminService.deleteAdmin(id);
@@ -242,6 +317,61 @@ async updateAgency(@Param('id', ParseIntPipe) id: number,@Body() updateData: { n
   // getUnknownCountry(){
   //   return this.adminService.getAgencyUnknownCountry();
   // }
-  
+    @Get('/getAgency/:id')
+  @UseGuards(SessionGuard)
+  async getAgency(
+    @Param('id', ParseIntPipe) id: number,
+    @Session() session,
+  ): Promise<AgencyEntity> {
+    const adminExists = await this.adminService.getAdminByIDSes(
+      Number(session.ID),
+    );
+
+    if (!adminExists) {
+      throw new HttpException(
+        {
+          statusCode: 9109,
+          message:
+            'You are not logged in with this id (This is a custom message)',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return this.adminService.getAgencyById(id);
+  }
+
+@Put('/changePhoto/:id')
+@UseInterceptors(FileInterceptor('file', {
+  storage: diskStorage({
+    destination: './Uploads',
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + '-' + file.originalname;
+      cb(null, uniqueName);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+      cb(null, true);
+    } else {
+      cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+}))
+async changePhoto(
+  @Param('id', ParseIntPipe) id: number,
+  @UploadedFile() file: Express.Multer.File,
+): Promise<object> {
+  if (!file) {
+    throw new Error('No file uploaded');
+  }
+
+  return this.adminService.updateAdminPhoto(id, file.filename);
+}
+ @Get('/recentAgencies')
+  async getRecentAgencies(): Promise<AgencyEntity[]> {
+    return this.adminService.getRecentAgencies();
+  }
 
 }

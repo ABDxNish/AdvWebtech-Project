@@ -9,15 +9,27 @@ import { AgencyEntity } from "src/Agents/Agency.entity";
 import { error } from "console";
 import * as bcrypt from 'bcrypt';
 import { MailerService } from "@nestjs-modules/mailer";
+import * as Pusher from 'pusher';
 @Injectable()
 export class AdminService{
-    constructor(@InjectRepository(AdminEntity)private adminRepository:Repository<AdminEntity>,@InjectRepository(AgencyEntity) private agencyRepository:Repository<AgencyEntity>,private mailerService: MailerService){}
-  
-    
+   private pusher: Pusher;
+    constructor(
+    @InjectRepository(AdminEntity) private adminRepository: Repository<AdminEntity>,
+    @InjectRepository(AgencyEntity) private agencyRepository: Repository<AgencyEntity>,
+    private mailerService: MailerService
+  ) {
+    this.pusher = new Pusher({
+      appId: '2049906',
+      key: '7b03cac815bde6a14a09',
+      secret: 'e7efd8cbbea34986da54',
+      cluster: 'ap2',
+      useTLS: true,
+    });
+  }
         getAdmin():string{
         return "Hello Admin";
     }
-    getAdminById(id:string):string{
+    getAdminById0(id:string):string{
         return "Admin Id" +id;
     }
     getPhoto():string{
@@ -73,6 +85,10 @@ export class AdminService{
    async getAdminByName(name:string): Promise<AdminEntity    | null> {
     return this.adminRepository.findOneBy({name:name})
    }
+  async getAdminById(id:number): Promise<AdminEntity    | null> {
+    return this.adminRepository.findOneBy({id:id})
+   }
+
       async getAdminByIDSes(id:number): Promise<AdminEntity    | null> {
     return this.adminRepository.findOneBy({id})
    }
@@ -112,18 +128,41 @@ export class AdminService{
    return this.adminRepository.findOneBy({id:id});
    console.log('Update complete');
    }
+   async resetPassword(id: number, newPass: string): Promise<object> {
+  const admin = await this.adminRepository.findOneBy({ id });
+  if (!admin) {
+    throw new HttpException(
+      { statusCode: 404, message: 'Admin not found' },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+
+  const hashedPass = await bcrypt.hash(newPass, 10); // hash new password
+  admin.pass = hashedPass;
+
+  await this.adminRepository.save(admin);
+
+  return { message: 'Password updated successfully' };
+}
+
    async deleteAdmin(id:number):Promise<void>{
     await this.adminRepository.delete(id);
    }
 
-   async createAgency(adminid:number,AgencyData:AgencyEntity):Promise<AgencyEntity | null>{
-    const admin=await this.adminRepository.findOneBy({id:adminid});
-    if(!admin){  throw new Error('Admin not found');}
-    else{
-    AgencyData.admin=admin;
-    }
-    return this.agencyRepository.save(AgencyData);
-   }
+  //  async createAgency(adminid:number,AgencyData:AgencyEntity):Promise<AgencyEntity | null>{
+  //   const admin=await this.adminRepository.findOneBy({id:adminid});
+  //   if(!admin){  throw new Error('Admin not found');}
+  //   else{
+  //   AgencyData.admin=admin;
+  //   }
+  //   return this.agencyRepository.save(AgencyData);
+  //  }
+
+
+
+
+
+   
    getAllAdminWitAgency():Promise<AdminEntity[]>{
     return this.adminRepository.find({relations:['agencys']});
    }
@@ -187,5 +226,65 @@ async updateAgency(id: number,updateData: { name, email }): Promise<AgencyEntity
 // async getAgencyUnknownCountry():Promise<AgencyEntity[]>{
 //     return this.agencyRepository.find({where:{country:'Unknown'}});
 // }
+async getAgencyById(id: number): Promise<AgencyEntity> {
+  const agency = await this.agencyRepository.findOneBy({ id });
+  if (!agency) {
+    throw new HttpException(
+      { statusCode: 404, message: 'Agency not found' },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+  return agency;
+}
+
+
+async updateAdminPhoto(id: number, filename: string): Promise<object> {
+  const admin = await this.adminRepository.findOne({ where: { id } });
+  if (!admin) {
+    throw new HttpException(
+      { statusCode: 404, message: 'Admin not found' },
+      HttpStatus.NOT_FOUND,
+    );
+  }
+
+  admin.photo = filename;
+  await this.adminRepository.save(admin);
+
+  return { message: 'Profile picture updated successfully', photo: filename };
+}
+
+async createAgency(adminid: number, AgencyData: AgencyEntity): Promise<AgencyEntity | null> {
+  const admin = await this.adminRepository.findOneBy({ id: adminid });
+  if (!admin) throw new Error('Admin not found');
+
+  AgencyData.admin = admin;
+  const agency = await this.agencyRepository.save(AgencyData);
+
+  try {
+    console.log("Triggering Pusher event for agency:", agency.name);
+await this.pusher.trigger("agency-channel", "agency-created", {
+  message: `New Agency Created: ${agency.name}`,
+  agency: agency,
+  adminId: adminid
+});
+    console.log("✅ Pusher event sent successfully!");
+  } catch (err) {
+    console.error("❌ Pusher trigger failed:", err);
+  }
+
+  return agency;
+}
+
+async getRecentAgencies(): Promise<AgencyEntity[]> {
+    return await this.agencyRepository.find({
+      relations: ['admin'], // include the admin relation
+      order: { id: 'DESC' },
+      take: 10, // last 10 agencies
+    });
+  }
 
 }
+
+
+
+
