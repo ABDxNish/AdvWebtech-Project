@@ -1,4 +1,4 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus, Patch } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus, Patch, Req } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { AdminData } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -8,7 +8,7 @@ import { AgencyEntity } from "src/Agents/Agency.entity";
 import * as bcrypt from 'bcrypt';
 //import { Session } from "inspector/promises";
 import { Session } from '@nestjs/common';
-
+import { Request } from "express";
 
 import session from "express-session";
 import { SessionGuard } from "./admin.session.guard";
@@ -96,11 +96,48 @@ getImage(@Param('name')name,@Res() res){
 
 //   return this.adminService.addAdminDto(adminData);
 // }
+// @Post('/addAdminM')
+// @UsePipes(new ValidationPipe)
+// @UseInterceptors(FileInterceptor('myfile', {
+//   storage: diskStorage({
+//     destination: './Uploads', // where files are stored
+//     filename: (req, file, cb) => {
+//       const uniqueName = Date.now() + '-' + file.originalname;
+//       cb(null, uniqueName);
+//     },
+//   }),
+//   fileFilter: (req, file, cb) => {
+//     if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+//       cb(null, true);
+//     } else {
+//       cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+//     }
+//   },
+//   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+// }))
+// async UploadFile(
+//   @UploadedFile() file: Express.Multer.File,
+//   @Body() adminData: AdminData
+// ): Promise<object> {
+//   if (!file) {
+//     throw new Error('No file uploaded');
+//   }
+
+//   console.log(file);
+
+//   // Store the saved filename in DB
+//   adminData.photo = file.filename;
+//    console.log("Received body:", body);
+
+//   const salt = await bcrypt.genSalt();
+//   adminData.pass = await bcrypt.hash(adminData.pass, salt);
+
+//   return this.adminService.addAdminDto(adminData);
+// }
 @Post('/addAdminM')
-@UsePipes(new ValidationPipe)
 @UseInterceptors(FileInterceptor('myfile', {
   storage: diskStorage({
-    destination: './Uploads', // where files are stored
+    destination: './Uploads',
     filename: (req, file, cb) => {
       const uniqueName = Date.now() + '-' + file.originalname;
       cb(null, uniqueName);
@@ -113,26 +150,26 @@ getImage(@Param('name')name,@Res() res){
       cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 }))
 async UploadFile(
   @UploadedFile() file: Express.Multer.File,
-  @Body() adminData: AdminData
+  @Body() body: any
 ): Promise<object> {
-  if (!file) {
-    throw new Error('No file uploaded');
-  }
+  if (!file) throw new Error('No file uploaded');
 
-  console.log(file);
+  console.log("Received body:", body); // <-- check if fields exist
 
-  // Store the saved filename in DB
-  adminData.photo = file.filename;
-
+  // Hash password
   const salt = await bcrypt.genSalt();
-  adminData.pass = await bcrypt.hash(adminData.pass, salt);
+  body.pass = await bcrypt.hash(body.pass, salt);
 
-  return this.adminService.addAdminDto(adminData);
+  // Save file name
+  body.photo = file.filename;
+
+  return this.adminService.addAdminDto(body); // save to DB
 }
+
 @Post('/loginAdmin')
 async loginSession(@Body(){ id, pass }: AdminData, @Session() session){
 
@@ -373,5 +410,16 @@ async changePhoto(
   async getRecentAgencies(): Promise<AgencyEntity[]> {
     return this.adminService.getRecentAgencies();
   }
+  @Post('/logout')
+logout(@Req() req: Request) {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error:", err);
+      }
+    });
+  }
+  return { message: 'Logged out successfully' };
+}
 
 }
