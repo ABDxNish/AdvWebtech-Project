@@ -1,8 +1,18 @@
-import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Controller,Get, Param, ParseIntPipe, Post, Query,Body, UseInterceptors, UploadedFile, Res, UsePipes, ValidationPipe, Delete, Put, UseGuards, HttpException, HttpStatus, Patch, Req } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { AdminData } from "./admin.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { diskStorage, MulterError } from "multer";
+import { AdminEntity } from "./admin.entity";
+import { AgencyEntity } from "src/Agents/Agency.entity";
+import * as bcrypt from 'bcrypt';
+//import { Session } from "inspector/promises";
+import { Session } from '@nestjs/common';
+import { Request } from "express";
+
+import session from "express-session";
+import { SessionGuard } from "./admin.session.guard";
+import { allowedNodeEnvironmentFlags } from "node:process";
 @Controller('adminP') //here admin is a path
 
 export class AdminController{
@@ -12,10 +22,10 @@ export class AdminController{
     getAdmin():string{
         return this.adminService.getAdmin();
     }
-    @Get('/getId/:id')
-    getAdminById(@Param('id')id:string):string{
-            return this.adminService.getAdminById(id);
-    }
+    // @Get('/getId/:id')
+    // getAdminById0(@Param('id')id:string):string{
+    //         return this.adminService.getAdminById(id);
+    // }
     @Post('/pic')
     getPhoto():string{
         return this.adminService.getPhoto();
@@ -24,71 +34,32 @@ export class AdminController{
     getPhotoById1(@Param('id',ParseIntPipe)id:number):string{
        return this.adminService.getPhotoById1(id);
     }
-      @Post('/photoId/:id')
-    getPhotoById2(@Param('id')id:number):string{
-       return this.adminService.getPhotoById2(id);
-    }
+    //   @Post('/photoId/:id')
+    // getPhotoById2(@Param('id')id:number):string{
+    //    return this.adminService.getPhotoById2(id);
+    // }
     @Get('/find')
     getAdminByNameAndId(@Query('name')name:string,@Query('id',ParseIntPipe)id:number):string{
         return this.adminService.getAdminByNameAndId(name,id);
     }
-//     @Post('/addAdmin')
-//     addAdmin(@Body()adminData:object):object{
-//         return this.adminService.addAdmin(adminData);
-//     }
-//       @Post('/addAdminDto')
-//     addAdminDto(@Body()adminData:AdminData):object{
-//         return this.adminService.addAdminDto(adminData);
-//     }
-//     @Post('/upload')
-//     @UseInterceptors(FileInterceptor('file'))
-//     Uploadfile(@UploadedFile()file:Express.Multer.File){
-//         console.log(file);
-//     }
-//   @Post('/UploadValidation')
-//    @UseInterceptors(FileInterceptor('file',{
-     
-//     fileFilter:(req,file,cb)=>{
-//       if(file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
-//         cb(null,true);
-//       else{
-//         cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
-//       }
-
-//     },
-//     limits:{fileSize:5000000},
-//     storage: diskStorage({
-//       destination: './Uploads',
-//       filename:function(req,file,cb){
-//         cb(null,Date.now()+file.originalname)
-//       },
-//     })
-
-//    }))
-//    uploadFileV(@UploadedFile() file: Express.Multer.File) {
-//  console.log(file);
-
-// }
-// @Get('/getimage/:name')
-// getImage(@Param('name')name,@Res() res){
-//     res.sendFile(name,{root:'./Uploads'})
-// }
-// //handling multiple operation in one route
-// @Post('/addAdminM')
-// @UsePipes(new ValidationPipe)
-//  @UseInterceptors(FileInterceptor('myfile'))
-// UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):object{
-//   console.log(file);
-//   adminData.photo=file.originalname;
-//   return this.adminService.addAdminDto(adminData);
-// }
-
-@Post('/register')
-@UsePipes(new ValidationPipe())
+    @Post('/addAdmin')
+    addAdmin(@Body()adminData:object):object{
+        return this.adminService.addAdmin(adminData);
+    }
+      @Post('/addAdminDto')
+    addAdminDto(@Body()adminData:AdminData):object{
+        return this.adminService.addAdminDto(adminData);
+    }
+    @Post('/upload')
+    @UseInterceptors(FileInterceptor('file'))
+    Uploadfile(@UploadedFile()file:Express.Multer.File){
+        console.log(file);
+    }
+  @Post('/UploadValidation')
    @UseInterceptors(FileInterceptor('file',{
      
     fileFilter:(req,file,cb)=>{
-      if(file.originalname.match(/^.*\.(pdf)$/))
+      if(file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
         cb(null,true);
       else{
         cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
@@ -97,25 +68,358 @@ export class AdminController{
     },
     limits:{fileSize:5000000},
     storage: diskStorage({
-      destination: './Uploads', //./src/admin/uploads
+      destination: './Uploads',
       filename:function(req,file,cb){
         cb(null,Date.now()+file.originalname)
       },
     })
 
    }))
-   getRegisteredData(@UploadedFile() file: Express.Multer.File,@Body()admindata:AdminData):object {
-admindata.filename=file.filename;
-  
-  console.log(file);
- console.log(admindata);
- return this.adminService.getRegisteredData(admindata);
+   uploadFileV(@UploadedFile() file: Express.Multer.File) {
+ console.log(file);
 
+}
+@Get('/getimage/:name')
+getImage(@Param('name')name,@Res() res){
+  
+    res.sendFile(name,{root:'./Uploads'})
+}
+//handling multiple operation in one route+hashing+session
+// @Post('/addAdminM')
+// @UsePipes(new ValidationPipe)
+//  @UseInterceptors(FileInterceptor('myfile'))
+// async UploadFile(@UploadedFile() file:Express.Multer.File, @Body() adminData:AdminData):Promise<object>{
+//   console.log(file);
+//   adminData.photo=file.originalname;
+//   const salt= await bcrypt.genSalt();
+//   adminData.pass= await bcrypt.hash(adminData.pass,salt);
+
+//   return this.adminService.addAdminDto(adminData);
+// }
+// @Post('/addAdminM')
+// @UsePipes(new ValidationPipe)
+// @UseInterceptors(FileInterceptor('myfile', {
+//   storage: diskStorage({
+//     destination: './Uploads', // where files are stored
+//     filename: (req, file, cb) => {
+//       const uniqueName = Date.now() + '-' + file.originalname;
+//       cb(null, uniqueName);
+//     },
+//   }),
+//   fileFilter: (req, file, cb) => {
+//     if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+//       cb(null, true);
+//     } else {
+//       cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+//     }
+//   },
+//   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+// }))
+// async UploadFile(
+//   @UploadedFile() file: Express.Multer.File,
+//   @Body() adminData: AdminData
+// ): Promise<object> {
+//   if (!file) {
+//     throw new Error('No file uploaded');
+//   }
+
+//   console.log(file);
+
+//   // Store the saved filename in DB
+//   adminData.photo = file.filename;
+//    console.log("Received body:", body);
+
+//   const salt = await bcrypt.genSalt();
+//   adminData.pass = await bcrypt.hash(adminData.pass, salt);
+
+//   return this.adminService.addAdminDto(adminData);
+// }
+@Post('/addAdminM')
+@UseInterceptors(FileInterceptor('myfile', {
+  storage: diskStorage({
+    destination: './Uploads',
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + '-' + file.originalname;
+      cb(null, uniqueName);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+      cb(null, true);
+    } else {
+      cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+}))
+async UploadFile(
+  @UploadedFile() file: Express.Multer.File,
+  @Body() body: any
+): Promise<object> {
+  if (!file) throw new Error('No file uploaded');
+
+  console.log("Received body:", body); // <-- check if fields exist
+
+  // Hash password
+  const salt = await bcrypt.genSalt();
+  body.pass = await bcrypt.hash(body.pass, salt);
+
+  // Save file name
+  body.photo = file.filename;
+
+  return this.adminService.addAdminDto(body); // save to DB
+}
+
+@Post('/loginAdmin')
+async loginSession(@Body(){ id, pass }: AdminData, @Session() session){
+
+ const admin= await this.adminService.loginSession(id,pass);
+ if(!admin){
+  return { message: 'User not found' };
+ }
+ else{
+  session.ID= admin.id;
+  //session.pass=check.pass;
+ console.log('Session Created');
+  console.log(session);
+ }
+}
+@Get('check-session')
+  checkSession(@Session() session) {
+    if (session.ID) {
+      return { loggedIn: true, id: session.ID };
+    }
+    return { loggedIn: false };
+  }
+
+
+//Lab2
+// @Post('/register')
+// @UsePipes(new ValidationPipe())
+//    @UseInterceptors(FileInterceptor('file',{
+     
+//     fileFilter:(req,file,cb)=>{
+//       if(file.originalname.match(/^.*\.(pdf)$/))
+//         cb(null,true);
+//       else{
+//         cb(new MulterError('LIMIT_UNEXPECTED_FILE','image'),false);
+//       }
+
+//     },
+//     limits:{fileSize:5000000},
+//     storage: diskStorage({
+//       destination: './Uploads', //./src/admin/uploads
+//       filename:function(req,file,cb){
+//         cb(null,Date.now()+file.originalname)
+//       },
+//     })
+
+//    }))
+//    getRegisteredData(@UploadedFile() file: Express.Multer.File,@Body()admindata:AdminData):object {
+// admindata.filename=file.filename;
+  
+//   console.log(file);
+//  console.log(admindata);
+//  return this.adminService.getRegisteredData(admindata);
+
+// }
+
+//crud and relationship
+   @Post('/getAdmin')
+   getAllAdmin():object{
+    return this.adminService.getAllAdmin();
+   }
+@Post('getAdminByName/:name')
+async getAdminByName(@Param('name') name: string): Promise<AdminEntity> {
+  const admin = await this.adminService.getAdminByName(name);
+
+if (!admin) {
+    throw new HttpException(
+      {
+        statusCode: 1001, 
+        message: 'Maybe name is incorrect (This is a custom message)',
+      },
+      HttpStatus.FORBIDDEN, 
+    );
+  }
+
+  return admin;
+}
+@Get('getAdminById/:id')
+async getAdminById(@Param('id') id: number): Promise<AdminEntity> {
+  const admin = await this.adminService.getAdminById(id);
+
+if (!admin) {
+    throw new HttpException(
+      {
+        statusCode: 1001, 
+        message: 'Maybe name is incorrect (This is a custom message)',
+      },
+      HttpStatus.FORBIDDEN, 
+    );
+  }
+
+  return admin;
 }
 
 
-   
+
+   @Put('/updateAdmin/:id')
+   updateAdmin(@Param('id', ParseIntPipe) id:number, @Body()name:AdminEntity):object{
+   return this.adminService.updateAdmin(id,name);
+   }
+   @Put('/reset-password')
+async resetPassword(@Session() session, @Body('newPass') newPass: string) {
+  if (!session.ID) {
+    throw new HttpException(
+      { statusCode: 401, message: 'Not logged in' },
+      HttpStatus.UNAUTHORIZED,
+    );
+  }
+
+  return this.adminService.resetPassword(session.ID, newPass);
+}
+
+   @Delete('/deleteAdmin/:id')
+   deleteAdmin(@Param('id',ParseIntPipe)id:number):object{
+    return this.adminService.deleteAdmin(id);
+   }
+
+   @Post('/addAgencies/:adminid')
+    @UseGuards(SessionGuard)
+   addAgency(@Param('adminid',ParseIntPipe) adminid:number,@Body()AgencyData:AgencyEntity, @Session() session):object{
+  
+    if(Number(session.ID)===Number(adminid)){
+    return this.adminService.createAgency(adminid,AgencyData);
+    }
+    else{
+      throw new HttpException(
+                 {
+                   statusCode: 9109, 
+                   message: 'You are not logged in with this id (This is a custom message)',
+                 },
+                 HttpStatus.FORBIDDEN, 
+               );
+    }
+   }
+   @Get('/allAdminWithAgencys')
+   getAllAdminAgency(): Promise<AdminEntity[]>{
+    return this.adminService.getAllAdminWitAgency();
+   }
+   @Post('/getAgencyByAdminId/:adminid')
+   getAgencyByAdminId(@Param('adminid',ParseIntPipe) id:number):Promise<AgencyEntity[]>{
+  return this.adminService.getAgencyByAdminId(id);
+   }
 
 
+@Get('/agencycount')
+async getAgencyCount(): Promise<{ count: number }> {
+  return this.adminService.countAgencies();
+}
+
+
+@Patch('/agencyupdate/:id')
+  @UseGuards(SessionGuard)
+async updateAgency(@Param('id', ParseIntPipe) id: number,@Body() updateData: { name, email }, @Session() session): Promise<AgencyEntity> {
+  const adminExists = await this.adminService.getAdminByIDSes(Number(session.ID));
+  if(adminExists){
+    return this.adminService.updateAgency(id, updateData);
+    }
+    else{
+      throw new HttpException(
+                 {
+                   statusCode: 9109, 
+                   message: 'You are not logged in with this id (This is a custom message)',
+                 },
+                 HttpStatus.FORBIDDEN, 
+               );
+    }
+  
+}
+
+  //lab3
+  // @Post('/createAgency')
+  // createAgency(@Body() agencyData:AgencyEntity):object{
+  //   return this.adminService.createAgency(agencyData);
+  // }
+  // @Post('/updateCountry/:id')
+  // updateCountr(@Param('id',ParseIntPipe)id:number, @Body()country:AgencyEntity){
+  //   return this.adminService.updateCountry(id,country);
+  // }
+  // @Post('/getAgencyByDate/:date')
+  // getAgencyByDate(@Param('date') date:string){
+  //   return this.adminService.getAgencyByDate(date)
+  // }
+  // @Post('/unknownCountry')
+  // getUnknownCountry(){
+  //   return this.adminService.getAgencyUnknownCountry();
+  // }
+    @Get('/getAgency/:id')
+  @UseGuards(SessionGuard)
+  async getAgency(
+    @Param('id', ParseIntPipe) id: number,
+    @Session() session,
+  ): Promise<AgencyEntity> {
+    const adminExists = await this.adminService.getAdminByIDSes(
+      Number(session.ID),
+    );
+
+    if (!adminExists) {
+      throw new HttpException(
+        {
+          statusCode: 9109,
+          message:
+            'You are not logged in with this id (This is a custom message)',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return this.adminService.getAgencyById(id);
+  }
+
+@Put('/changePhoto/:id')
+@UseInterceptors(FileInterceptor('file', {
+  storage: diskStorage({
+    destination: './Uploads',
+    filename: (req, file, cb) => {
+      const uniqueName = Date.now() + '-' + file.originalname;
+      cb(null, uniqueName);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.match(/\.(jpg|jpeg|png|webp)$/)) {
+      cb(null, true);
+    } else {
+      cb(new MulterError('LIMIT_UNEXPECTED_FILE', 'image'), false);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+}))
+async changePhoto(
+  @Param('id', ParseIntPipe) id: number,
+  @UploadedFile() file: Express.Multer.File,
+): Promise<object> {
+  if (!file) {
+    throw new Error('No file uploaded');
+  }
+
+  return this.adminService.updateAdminPhoto(id, file.filename);
+}
+ @Get('/recentAgencies')
+  async getRecentAgencies(): Promise<AgencyEntity[]> {
+    return this.adminService.getRecentAgencies();
+  }
+  @Post('/logout')
+logout(@Req() req: Request) {
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction error:", err);
+      }
+    });
+  }
+  return { message: 'Logged out successfully' };
+}
 
 }
